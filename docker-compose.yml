@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trailmatch
+      POSTGRES_PASSWORD: trailmatch   # local dev only
+      POSTGRES_DB: trailmatch
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trailmatch"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["127.0.0.1:8000:8000"]
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:8080"  # Замініть перше 3000 на порт, де хочете відкривати сайт у браузері
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:
